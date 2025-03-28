@@ -4,54 +4,50 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"net"
 	"os"
-	"strings"
+	"time"
 )
 
 func getLinesChannel(f io.ReadCloser) <-chan string {
 	linesChan := make(chan string)
-	bufferedReader := bufio.NewReader(f)
+	scanner := bufio.NewScanner(f)
 	go func() {
-
-		dataBytes := make([]byte, 8) // Create a byte slice of size 8 bytes
-		var currentLine string
-		for {
-			bytesRead, err := io.ReadFull(bufferedReader, dataBytes)
-			if err != nil && err != io.ErrUnexpectedEOF && err != io.EOF {
-				// Handle the error if it's not EOF or unexpected EOF
-				fmt.Fprintf(os.Stderr, "Error reading file: %v\n", err)
-				os.Exit(1)
-			}
-			if err == io.EOF {
-				break // End of file reached
-			}
-			msg := currentLine + string(dataBytes[:bytesRead])
-			parts := strings.Split(msg, "\n") // Split the message into lines
-			for i := 0; i < len(parts)-1; i++ {
-				linesChan <- parts[i] // Print the read data
-			}
-			currentLine = parts[len(parts)-1] // Keep the last part for the next iteration
-			if err == io.ErrUnexpectedEOF {
-				break // Break the loop if we reach EOF before reading the exact number of bytes requested
-			}
-		}
-		if currentLine != "" {
-			linesChan <- currentLine // Print the remaining line
+		for scanner.Scan() {
+			linesChan <- scanner.Text() // Send the line to the channel
 		}
 		close(linesChan)
 	}()
 	return linesChan
 }
 
+func handleConnection(conn net.Conn) {
+	defer func() {
+		conn.Close()
+		fmt.Println("Connection closed")
+	}()
+	conn.SetDeadline(time.Now().Add(600 * time.Second)) // Set a deadline for the connection to avoid hanging indefinitely.
+	linesChan := getLinesChannel(conn)
+	for line := range linesChan {
+		fmt.Println(line)
+	}
+}
 func main() {
-	msgFile, err := os.Open("message.txt")
+
+	listener, err := net.Listen("tcp", ":42069")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error opening file: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error starting TCP listener: %v\n", err)
 		os.Exit(1)
 	}
-	defer msgFile.Close()
+	defer listener.Close()
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "listener closed: %v", err)
+			break
+		}
+		fmt.Println("New connection accepted")
+		go handleConnection(conn)
 
-	for line := range getLinesChannel(msgFile) {
-		fmt.Printf("read: %s\n", line)
 	}
 }
