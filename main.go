@@ -1,22 +1,42 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"net"
 	"os"
+	"strings"
 	"time"
 )
 
 func getLinesChannel(f io.ReadCloser) <-chan string {
 	linesChan := make(chan string)
-	scanner := bufio.NewScanner(f)
+
 	go func() {
-		for scanner.Scan() {
-			linesChan <- scanner.Text() // Send the line to the channel
+		defer close(linesChan)
+		dataBytes := make([]byte, 8)
+		remaining := ""
+		for {
+			bytesRead, err := f.Read(dataBytes)
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				fmt.Fprintf(os.Stderr, "Error reading from connection: %v\n", err)
+				return
+			}
+			textToProcess := string(dataBytes[:bytesRead])
+			remaining += textToProcess
+			parts := strings.Split(remaining, "\n")
+			for i := 0; i < len(parts)-1; i++ {
+				line := strings.TrimSpace(parts[i])
+				if line != "" {
+					linesChan <- line
+				}
+			}
+			remaining = parts[len(parts)-1]
 		}
-		close(linesChan)
+		linesChan <- remaining
 	}()
 	return linesChan
 }
