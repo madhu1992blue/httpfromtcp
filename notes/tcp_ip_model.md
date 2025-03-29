@@ -131,4 +131,34 @@ There are TCP segments that get lost. Detecting that and resending is also part 
 
   The TIME-WAIT state is a special state where the initiator waits for a certain period (2MSL, or Maximum Segment Lifetime) to ensure that any delayed packets are handled before fully closing the connection. After this period, the initiator transitions to the CLOSED state.
 
-  
+
+## UDP 
+
+Here’s the improved summary:  
+
+---
+
+- **UDP is a connectionless protocol**, meaning it does not establish a connection before sending data.  
+- **UDP does not guarantee** delivery, order, or error correction.  
+- It is **faster than TCP** due to minimal overhead.  
+- UDP is commonly used in **real-time applications** where speed is more critical than reliability, such as **video streaming, online gaming, and VoIP**.  
+- UDP transmits data in **discrete units called datagrams**.  
+- If a datagram is lost, **UDP does not retransmit it**. However, some applications implement their **own error recovery mechanisms** (e.g., RTP for video streaming).  
+- UDP supports **broadcasting and multicasting**, making it useful for **group communication**.  
+
+
+## Differences between TCP and UDP
+
+| Feature | TCP | UDP |
+|---------|-----|-----|
+| Connection | Connection-oriented | Connectionless |
+| Reliability | Reliable (guarantees delivery) | Unreliable (no delivery guarantee) |
+| Order | Ordered delivery | Unordered delivery |
+| Flow Control | Yes | No |
+| Error Correction | Yes | No |
+| Speed | Slower (due to overhead) | Faster (minimal overhead) |
+| Use Cases | Web browsing, file transfer, email | Video streaming, online gaming, VoIP |
+| Data Transmission | Segments | Datagrams |
+| Broadcasting | No | Yes |
+| Multicasting | No | Yes |
+
