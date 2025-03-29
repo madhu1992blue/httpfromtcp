@@ -24,10 +24,6 @@ func main() {
 		}
 		udpConn.Write([]byte(line)) // Send the message to the UDP server
 	}
-	if err != nil {
-		fmt.Println("Error sending message:", err)
-		return
-	}
 	fmt.Println("Message sent to UDP server")
 
 }
