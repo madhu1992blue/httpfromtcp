@@ -25,8 +25,11 @@ func scan_file_with_bufio(filename string) {
 	defer file.Close()                // Any open file should be closed when done . So, defer it.
 	scanner := bufio.NewScanner(file) // Create a new scanner for the file
 	for scanner.Scan() {
-		text := scanner.Text()
-		fmt.Println(text) // Print each line
+
+		bytes := scanner.Bytes()              // Note: The underlying bytes are reused by the scanner, so we need to copy them if we want to keep them.
+		dataBytes := make([]byte, len(bytes)) // Create a new byte slice to copy the data
+		copy(dataBytes, bytes)                // Copy the data to the new byte slice
+		fmt.Println(string(dataBytes))        // Print each line
 	}
 	if scanner.Err() != nil { // We don't need to check io.EOF as if EOF is reached, err will still be nil for this API.
 		fmt.Println("Error reading file:", scanner.Err())
@@ -194,6 +197,7 @@ When to use which:
 - Use bufio.NewReaderSize when you want to control the size of the internal buffer for better performance.
 - When specific size is needed, Use `io.ReadFull(reader, byteSlice)` when you want to read an exact number of bytes from a reader or a file.
 	- Use io.ReadFull when you need an exact number of bytes.
-	- If the file is shorter than expected, handle io.ErrUnexpectedEOF.
+	- If the read source is shorter than expected, handle io.ErrUnexpectedEOF.
 	- This is almost always used when reading exact sizes of data from a reader.
+	- Note: This may be probelmatic for some connection type streams like TCP connections as all data may not be available at once. So, this causes io.ErrUnexpectedEOF.
 */

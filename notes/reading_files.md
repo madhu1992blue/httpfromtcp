@@ -14,7 +14,7 @@ Here's a **refined version** of your summary with a **"Basic vs Advanced APIs"**
 | **`bufio.NewReader`** | Read a file **with buffering** to improve performance and **reduce system calls**. Reads upto the provided capacity of data bytes array to the Read but doesn't guarantee reading the eact number of bytes requested, even when more data is available. Use io.ReadFull to ensure full reads. |
 | **`os.File.Read`** | os.File.Read reads up to the provided buffer capacity but does not guarantee reading the exact number of bytes requested, even when more data is available. Use io.ReadFull to ensure full reads. |
 | **`bufio.NewReaderSize`** | Similar to `bufio.NewReader`, but allows **customizing buffer size** for performance tuning. Reads upto the provided data bytes array to the Read but doesn't guarantee reading the eact number of bytes requested, even when more data is available. Use io.ReadFull to ensure full reads. |
-| ** `io.ReadFull`** | Reads from an `io.Reader` until the buffer is full or EOF. Useful for **ensuring complete reads of a specific size**. We need to handle io.ErrUnexpectedEOF when data size requested is more than data available. |
+| ** `io.ReadFull`** | Reads from an `io.Reader` until the buffer is full or EOF. Useful for **ensuring complete reads of a specific size**. We need to handle io.ErrUnexpectedEOF when data size requested is more than data available. Note: This can be problematic while reading from non-regular files like connection sockets as data might not be ready yet and io.ErrUnexpectedEOF will be hit. So, best not to use with data streams where data will arrive asynchronously.|
 ---
 
 ### **🔹 Advanced APIs (For Special Use Cases)**
