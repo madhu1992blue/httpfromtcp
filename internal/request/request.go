@@ -5,20 +5,23 @@ import (
 	"fmt"
 	"io"
 	"strings"
+
+	"github.com/madhu1992blue/httpfromtcp/internal/headers"
 )
 
 type ParserState int
 
 const (
-	Initialized ParserState = iota
-	Done
+	requestStateInitialized ParserState = iota
+	requestStateParsingHeaders
+	requestStateDone
 )
 
 const bufferSize = 8
 
 type Request struct {
 	RequestLine RequestLine
-	Headers     map[string]string
+	Headers     headers.Headers
 	Body        []byte
 	ParserState
 }
@@ -66,9 +69,10 @@ func RequestFromReader(r io.Reader) (*Request, error) {
 	buf := make([]byte, bufferSize)
 	readToIndex := 0
 	req := Request{
-		ParserState: Initialized,
+		ParserState: requestStateInitialized,
+		Headers:     headers.NewHeaders(),
 	}
-	for req.ParserState != Done {
+	for req.ParserState != requestStateDone {
 		if readToIndex == len(buf) {
 			newBuf := make([]byte, len(buf)*2)
 			copy(newBuf, buf)
@@ -96,21 +100,37 @@ func RequestFromReader(r io.Reader) (*Request, error) {
 }
 
 func (r *Request) parse(data []byte) (int, error) {
-	if r.ParserState == Done {
+	if r.ParserState == requestStateDone {
 		return 0, fmt.Errorf("error: trying to read data in a done state")
 	}
-	if r.ParserState != Initialized {
-		return 0, fmt.Errorf("error: unknown parser state")
+	switch r.ParserState {
+	case requestStateInitialized:
+		reqLine, offset, err := parseRequestLine(data)
+		if err != nil {
+			return 0, err
+		}
+		if offset == 0 {
+			// More data is needed to parse the request line
+			return 0, nil
+		}
+		r.RequestLine = reqLine
+		r.ParserState = requestStateParsingHeaders
+		return offset, nil
+	case requestStateParsingHeaders:
+		offset, done, err := r.Headers.Parse(data)
+		if err != nil {
+			return 0, err
+		}
+		if done {
+			r.ParserState = requestStateDone
+			return offset, nil
+		}
+		if offset == 0 {
+			// More data is needed to parse the headers
+			return 0, nil
+		}
+		return offset, nil
 	}
-	reqLine, offset, err := parseRequestLine(data)
-	if err != nil {
-		return 0, err
-	}
-	if offset == 0 {
-		// More data is needed to parse the request line
-		return 0, nil
-	}
-	r.RequestLine = reqLine
-	r.ParserState = Done
-	return offset, nil
+
+	return 0, fmt.Errorf("unknown parser state: %d", r.ParserState)
 }
