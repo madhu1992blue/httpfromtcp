@@ -24,6 +24,21 @@ Go is a modern, efficient, and easy-to-learn language, especially for engineers 
 - **`internal/request/`**: Manages HTTP request parsing and state.
 - **`notes/`**: Includes detailed explanations and examples for concepts like TCP, HTTP, and file reading in Go.
 
+## **Project Structure Diagram**
+```mermaid
+graph TD
+    A[Project Root] --> B[cmd/]
+    A --> C[internal/]
+    A --> D[notes/]
+    C --> E[headers/]
+    C --> F[request/]
+    B --> G[TCP Listener]
+    B --> H[UDP Sender]
+    E --> I[Header Parsing]
+    F --> J[Request Parsing]
+    D --> K[Concepts and Examples]
+```
+
 ## **How to Get Started**
 1. **Familiarize Yourself with Go**:
    - Install Go: [https://go.dev/dl/](https://go.dev/dl/)
